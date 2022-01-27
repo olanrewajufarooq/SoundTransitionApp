@@ -1,4 +1,4 @@
-classdef SoundTransitionApp_exported < matlab.apps.AppBase
+classdef SoundTransitionApp < matlab.apps.AppBase
 
     % Properties that correspond to app components
     properties (Access = public)
@@ -64,7 +64,7 @@ classdef SoundTransitionApp_exported < matlab.apps.AppBase
 
         % Button pushed function: LoadMusicAButton
         function LoadMusicAButtonPushed(app, event)
-            [file, path] = uigetfile({'*.wav; *.mp3; *.m4a'});
+            [file, path] = uigetfile({'*.wav; *.mp3; *.mp4; *.m4a'});
             fullpath = fullfile(path, file);
             try
                 [app.load_music_a, app.freq_a] = audioread(fullpath);
@@ -82,6 +82,7 @@ classdef SoundTransitionApp_exported < matlab.apps.AppBase
             
             plot(app.UIAxes, time, amp);
             app.UIAxes.XLim = [0, int16(length(amp)*period - period)];
+            axis(app.UIAxes, 'tight');
             
             app.StartSlider.Enable = true;
             app.EndSlider.Enable = true;
@@ -110,7 +111,7 @@ classdef SoundTransitionApp_exported < matlab.apps.AppBase
 
         % Button pushed function: LoadMusicBButton
         function LoadMusicBButtonPushed(app, event)
-            [file, path] = uigetfile({'*.wav; *.mp3; *.m4a'});
+            [file, path] = uigetfile({'*.wav; *.mp3; *.mp4; *.m4a'});
             fullpath = fullfile(path, file);
             try
                 [app.load_music_b, app.freq_b] = audioread(fullpath);
@@ -128,6 +129,7 @@ classdef SoundTransitionApp_exported < matlab.apps.AppBase
             
             plot(app.UIAxes2, time, amp);
             app.UIAxes2.XLim = [0, int16(length(amp)*period - period)];
+            axis(app.UIAxes2, 'tight');
             
             app.StartSlider_2.Enable = true;
             app.EndSlider_2.Enable = true;
@@ -262,8 +264,8 @@ classdef SoundTransitionApp_exported < matlab.apps.AppBase
             time = 0:period:(length(amp)*period - period);
             
             plot(app.UIAxes3, time, amp);
-            app.UIAxes2.XLim = [0, int16(length(amp)*period - period)];
-            
+            app.UIAxes3.XLim = [0, int16(length(amp)*period - period)];
+            axis(app.UIAxes3, 'tight');
             
             app.UIAxes3.Visible = true;
         end
@@ -271,15 +273,19 @@ classdef SoundTransitionApp_exported < matlab.apps.AppBase
         % Button pushed function: PlayButton
         function PlayButtonPushed(app, event)
             app.player_mixed = audioplayer(app.play_music_mixed, app.play_music_mixed_freq);
-            play(app.play_music_mixed)
+            play(app.player_mixed)
         end
 
         % Button pushed function: ExportButton
         function ExportButtonPushed(app, event)
-            [filename, path] = uiputfile({'*.wav; *.mp3; *.m4a'});
+            [filename, path] = uiputfile({'*.flac; *.m4a; *.mp4; *.oga; *.ogg; *.wav'});
             
-            if ~isequal(file, 0)
-                audiowrite(fullfile(path, filename), app.play_music_mixed, app.play_music_mixed_freq);
+            if ~isequal(filename, 0)
+                try
+                    audiowrite(fullfile(path, filename), app.play_music_mixed, app.play_music_mixed_freq);
+                catch
+                    return
+                end
             end
         end
     end
@@ -504,7 +510,7 @@ classdef SoundTransitionApp_exported < matlab.apps.AppBase
     methods (Access = public)
 
         % Construct app
-        function app = SoundTransitionApp_exported
+        function app = SoundTransitionApp
 
             % Create UIFigure and components
             createComponents(app)
