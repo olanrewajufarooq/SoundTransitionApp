@@ -20,7 +20,7 @@ classdef SoundTransitionApp_exported < matlab.apps.AppBase
         MergeButton              matlab.ui.control.Button
         PlayButton               matlab.ui.control.Button
         ExportButton             matlab.ui.control.Button
-        DJMixerLabel             matlab.ui.control.Label
+        SoundTransitionAppLabel  matlab.ui.control.Label
         StudentNameLabel         matlab.ui.control.Label
         StudentIDLabel           matlab.ui.control.Label
         ABDULLAHISHEHULabel      matlab.ui.control.Label
@@ -31,6 +31,9 @@ classdef SoundTransitionApp_exported < matlab.apps.AppBase
         EndSlider_2Label         matlab.ui.control.Label
         EndSlider_2              matlab.ui.control.Slider
         UIAxes3                  matlab.ui.control.UIAxes
+        StopMusicButton          matlab.ui.control.Button
+        StopMusicButton_2        matlab.ui.control.Button
+        StopButton               matlab.ui.control.Button
     end
 
     
@@ -40,15 +43,19 @@ classdef SoundTransitionApp_exported < matlab.apps.AppBase
         bool_music_a = false;
         play_music_a
         play_music_a_freq
+        music_a_playing
         
         load_music_b
         freq_b
         bool_music_b = false;
         play_music_b
         play_music_b_freq
+        music_b_playing
         
         play_music_mixed
         play_music_mixed_freq
+        bool_music_mixed
+        music_mixed_playing
     end
     
     properties (Access = public)
@@ -64,7 +71,7 @@ classdef SoundTransitionApp_exported < matlab.apps.AppBase
 
         % Button pushed function: LoadMusicAButton
         function LoadMusicAButtonPushed(app, event)
-            [file, path] = uigetfile({'*.wav; *.mp3; *.m4a'});
+            [file, path] = uigetfile({'*.wav; *.mp3; *.mp4; *.m4a'});
             fullpath = fullfile(path, file);
             try
                 [app.load_music_a, app.freq_a] = audioread(fullpath);
@@ -82,6 +89,7 @@ classdef SoundTransitionApp_exported < matlab.apps.AppBase
             
             plot(app.UIAxes, time, amp);
             app.UIAxes.XLim = [0, int16(length(amp)*period - period)];
+            axis(app.UIAxes, 'tight');
             
             app.StartSlider.Enable = true;
             app.EndSlider.Enable = true;
@@ -102,15 +110,35 @@ classdef SoundTransitionApp_exported < matlab.apps.AppBase
 
         % Button pushed function: TestPlayButton
         function TestPlayButtonPushed(app, event)
+            % Stop Other Sounds
+            if app.music_a_playing
+                stop(app.player_a);
+            end
+            if app.music_b_playing
+                stop(app.player_b);
+                app.TestPlayButton_2.Visible = true;
+                app.StopMusicButton_2.Visible = false;
+            end
+            if app.music_mixed_playing
+                stop(app.player_mixed);
+                app.PlayButton.Visible = true;
+                app.StopButton.Visible = false;
+            end
+            
+            app.StopMusicButton.Visible = true;
+            app.TestPlayButton.Visible = false;
+                
+            % Play Current Sound
             drpdwnValue = str2double(app.PlaybackDropDown.Value);
             app.play_music_a_freq = round(drpdwnValue * app.freq_a);
             app.player_a = audioplayer(app.play_music_a, app.play_music_a_freq);
             play(app.player_a)
+            app.music_a_playing = true;
         end
 
         % Button pushed function: LoadMusicBButton
         function LoadMusicBButtonPushed(app, event)
-            [file, path] = uigetfile({'*.wav; *.mp3; *.m4a'});
+            [file, path] = uigetfile({'*.wav; *.mp3; *.mp4; *.m4a'});
             fullpath = fullfile(path, file);
             try
                 [app.load_music_b, app.freq_b] = audioread(fullpath);
@@ -128,6 +156,7 @@ classdef SoundTransitionApp_exported < matlab.apps.AppBase
             
             plot(app.UIAxes2, time, amp);
             app.UIAxes2.XLim = [0, int16(length(amp)*period - period)];
+            axis(app.UIAxes2, 'tight');
             
             app.StartSlider_2.Enable = true;
             app.EndSlider_2.Enable = true;
@@ -148,30 +177,53 @@ classdef SoundTransitionApp_exported < matlab.apps.AppBase
 
         % Button pushed function: TestPlayButton_2
         function TestPlayButton_2Pushed(app, event)
+            % Stop Other Sounds
+            if app.music_a_playing
+                stop(app.player_a);
+                app.TestPlayButton.Visible = true;
+                app.StopMusicButton.Visible = false;
+            end
+            if app.music_b_playing
+                stop(app.player_b);
+            end
+            if app.music_mixed_playing
+                stop(app.player_mixed);
+                app.PlayButton.Visible = true;
+                app.StopButton.Visible = false;
+            end
+            
+            app.StopMusicButton_2.Visible = true;
+            app.TestPlayButton_2.Visible = false;
+            
+            % Play Current Sound            
             drpdwnValue = str2double(app.PlaybackDropDown_2.Value);
             app.play_music_b_freq = round(drpdwnValue * app.freq_b);
             app.player_b = audioplayer(app.play_music_b, app.play_music_b_freq);
             play(app.player_b)
+            app.music_b_playing = true;
         end
 
         % Value changed function: StartSlider
         function StartSliderValueChanged(app, event)
-            start_value = app.StartSlider.Value;
-            end_value = app.EndSlider.Value;
+            start_value = round(app.StartSlider.Value);
+            end_value = round(app.EndSlider.Value);
             
             
             if start_value >= end_value
                 start_value = app.StartSlider.Limits(1);
-                app.StartSlider.Value = start_value;
+                app.StartSlider.Value = get(app.StartSlider, 'MIN');
             end
             
-            app.play_music_a = app.load_music_a(start_value:end_value);
+            cut_start = round(start_value*app.freq_a);
+            cut_end = round(end_value*app.freq_a);
+            
+            app.play_music_a = app.load_music_a(cut_start:cut_end);
         end
 
         % Value changed function: EndSlider
         function EndSliderValueChanged(app, event)
-            start_value = app.StartSlider.Value;
-            end_value = app.EndSlider.Value;
+            start_value = round(app.StartSlider.Value);
+            end_value = round(app.EndSlider.Value);
             
             
             if end_value <= start_value
@@ -179,13 +231,16 @@ classdef SoundTransitionApp_exported < matlab.apps.AppBase
                 app.EndSlider.Value = end_value;
             end
             
-            app.play_music_a = app.load_music_a(start_value:end_value);
+            cut_start = round(start_value*app.freq_a);
+            cut_end = round(end_value*app.freq_a);
+            
+            app.play_music_a = app.load_music_a(cut_start:cut_end);
         end
 
         % Value changed function: StartSlider_2
         function StartSlider_2ValueChanged(app, event)
-            start_value = app.StartSlider_2.Value;
-            end_value = app.EndSlider_2.Value;
+            start_value = round(app.StartSlider_2.Value);
+            end_value = round(app.EndSlider_2.Value);
             
             
             if start_value >= end_value
@@ -193,7 +248,10 @@ classdef SoundTransitionApp_exported < matlab.apps.AppBase
                 app.StartSlider_2.Value = start_value;
             end
             
-            app.play_music_b = app.load_music_b(start_value:end_value);
+            cut_start = round(start_value*app.freq_b);
+            cut_end = round(end_value*app.freq_b);
+            
+            app.play_music_b = app.load_music_b(cut_start:cut_end);
             
         end
 
@@ -208,7 +266,10 @@ classdef SoundTransitionApp_exported < matlab.apps.AppBase
                 app.EndSlider_2.Value = end_value;
             end
             
-            app.play_music_b = app.load_music_b(start_value:end_value);
+            cut_start = round(start_value*app.freq_b);
+            cut_end = round(end_value*app.freq_b);
+            
+            app.play_music_b = app.load_music_b(cut_start:cut_end);
             
         end
 
@@ -221,9 +282,9 @@ classdef SoundTransitionApp_exported < matlab.apps.AppBase
             signal_b = app.play_music_b;
             
             % Music Processing
-            sample_rate_a = app.play_music_a_freq;
-            sample_rate_b = app.play_music_b_freq;
-            sample_rate_mixed = int16(48000);
+            sample_rate_a = app.freq_a;
+            sample_rate_b = app.freq_b;
+            sample_rate_mixed = 48000;
             
             if sample_rate_a ~= sample_rate_mixed
                 [P,Q] = rat(sample_rate_mixed/sample_rate_a);
@@ -255,6 +316,7 @@ classdef SoundTransitionApp_exported < matlab.apps.AppBase
 
             app.play_music_mixed = signal_mixed;
             app.play_music_mixed_freq = sample_rate_mixed;
+            app.bool_music_mixed = true;
             
             % Plot Merged Music
             amp = app.play_music_mixed;
@@ -262,25 +324,76 @@ classdef SoundTransitionApp_exported < matlab.apps.AppBase
             time = 0:period:(length(amp)*period - period);
             
             plot(app.UIAxes3, time, amp);
-            app.UIAxes2.XLim = [0, int16(length(amp)*period - period)];
-            
+            app.UIAxes3.XLim = [0, int16(length(amp)*period - period)];
+            axis(app.UIAxes3, 'tight');
             
             app.UIAxes3.Visible = true;
         end
 
         % Button pushed function: PlayButton
         function PlayButtonPushed(app, event)
+            % Stop Other Sounds
+            if app.music_a_playing
+                stop(app.player_a);
+                app.TestPlayButton.Visible = true;
+                app.StopMusicButton.Visible = false;
+            end
+            if app.music_b_playing
+                stop(app.player_b);
+                app.TestPlayButton_2.Visible = true;
+                app.StopMusicButton_2.Visible = false;
+            end
+            if app.music_mixed_playing
+                stop(app.player_mixed);
+            end
+            
+            app.StopButton.Visible = true;
+            app.PlayButton.Visible = false;
+            
+            % Play Current Sound
             app.player_mixed = audioplayer(app.play_music_mixed, app.play_music_mixed_freq);
-            play(app.play_music_mixed)
+            play(app.player_mixed)
+            app.music_mixed_playing = true;
         end
 
         % Button pushed function: ExportButton
         function ExportButtonPushed(app, event)
-            [filename, path] = uiputfile({'*.wav; *.mp3; *.m4a'});
+            [filename, path] = uiputfile({'*.flac; *.m4a; *.mp4; *.oga; *.ogg; *.wav'});
             
-            if ~isequal(file, 0)
-                audiowrite(fullfile(path, filename), app.play_music_mixed, app.play_music_mixed_freq);
+            if ~isequal(filename, 0)
+                try
+                    audiowrite(fullfile(path, filename), app.play_music_mixed, app.play_music_mixed_freq);
+                catch
+                    return
+                end
             end
+        end
+
+        % Button pushed function: StopMusicButton
+        function StopMusicButtonPushed(app, event)
+            app.music_a_playing = false;
+            app.TestPlayButton.Visible = true;
+            app.StopMusicButton.Visible = false;
+            
+            stop(app.player_a)
+        end
+
+        % Button pushed function: StopMusicButton_2
+        function StopMusicButton_2Pushed(app, event)
+            app.music_b_playing = false;
+            app.TestPlayButton_2.Visible = true;
+            app.StopMusicButton_2.Visible = false;
+            
+            stop(app.player_b)
+        end
+
+        % Button pushed function: StopButton
+        function StopButtonPushed(app, event)
+            app.music_mixed_playing = false;
+            app.PlayButton.Visible = true;
+            app.StopButton.Visible = false;
+            
+            stop(app.player_mixed)
         end
     end
 
@@ -417,13 +530,13 @@ classdef SoundTransitionApp_exported < matlab.apps.AppBase
             app.ExportButton.Position = [526 43 146 50];
             app.ExportButton.Text = 'Export';
 
-            % Create DJMixerLabel
-            app.DJMixerLabel = uilabel(app.UIFigure);
-            app.DJMixerLabel.HorizontalAlignment = 'center';
-            app.DJMixerLabel.FontName = 'Lucida Handwriting';
-            app.DJMixerLabel.FontSize = 40;
-            app.DJMixerLabel.Position = [308 678 234 57];
-            app.DJMixerLabel.Text = 'DJ Mixer';
+            % Create SoundTransitionAppLabel
+            app.SoundTransitionAppLabel = uilabel(app.UIFigure);
+            app.SoundTransitionAppLabel.HorizontalAlignment = 'center';
+            app.SoundTransitionAppLabel.FontName = 'Bodoni MT Poster Compressed';
+            app.SoundTransitionAppLabel.FontSize = 40;
+            app.SoundTransitionAppLabel.Position = [227 687 396 48];
+            app.SoundTransitionAppLabel.Text = 'Sound Transition App';
 
             % Create StudentNameLabel
             app.StudentNameLabel = uilabel(app.UIFigure);
@@ -494,6 +607,27 @@ classdef SoundTransitionApp_exported < matlab.apps.AppBase
             app.UIAxes3.Visible = 'off';
             app.UIAxes3.BackgroundColor = [0.902 0.902 0.902];
             app.UIAxes3.Position = [119 101 632 185];
+
+            % Create StopMusicButton
+            app.StopMusicButton = uibutton(app.UIFigure, 'push');
+            app.StopMusicButton.ButtonPushedFcn = createCallbackFcn(app, @StopMusicButtonPushed, true);
+            app.StopMusicButton.Visible = 'off';
+            app.StopMusicButton.Position = [159 299 100 22];
+            app.StopMusicButton.Text = {'Stop Music'; ''};
+
+            % Create StopMusicButton_2
+            app.StopMusicButton_2 = uibutton(app.UIFigure, 'push');
+            app.StopMusicButton_2.ButtonPushedFcn = createCallbackFcn(app, @StopMusicButton_2Pushed, true);
+            app.StopMusicButton_2.Visible = 'off';
+            app.StopMusicButton_2.Position = [596 299 100 22];
+            app.StopMusicButton_2.Text = 'Stop Music';
+
+            % Create StopButton
+            app.StopButton = uibutton(app.UIFigure, 'push');
+            app.StopButton.ButtonPushedFcn = createCallbackFcn(app, @StopButtonPushed, true);
+            app.StopButton.Visible = 'off';
+            app.StopButton.Position = [358 43 146 50];
+            app.StopButton.Text = 'Stop';
 
             % Show the figure after all components are created
             app.UIFigure.Visible = 'on';
