@@ -206,7 +206,7 @@ classdef SoundTransitionApp_exported < matlab.apps.AppBase
         % Value changed function: StartSlider
         function StartSliderValueChanged(app, event)
             start_value = round(app.StartSlider.Value);
-            end_value = round(app.EndSlider.Value);
+            end_value = floor(app.EndSlider.Value);
             
             
             if start_value >= end_value
@@ -215,7 +215,7 @@ classdef SoundTransitionApp_exported < matlab.apps.AppBase
             end
             
             cut_start = round(start_value*app.freq_a);
-            cut_end = round(end_value*app.freq_a);
+            cut_end = floor(end_value*app.freq_a);
             
             app.play_music_a = app.load_music_a(cut_start:cut_end);
         end
@@ -223,7 +223,7 @@ classdef SoundTransitionApp_exported < matlab.apps.AppBase
         % Value changed function: EndSlider
         function EndSliderValueChanged(app, event)
             start_value = round(app.StartSlider.Value);
-            end_value = round(app.EndSlider.Value);
+            end_value = floor(app.EndSlider.Value);
             
             
             if end_value <= start_value
@@ -232,7 +232,7 @@ classdef SoundTransitionApp_exported < matlab.apps.AppBase
             end
             
             cut_start = round(start_value*app.freq_a);
-            cut_end = round(end_value*app.freq_a);
+            cut_end = floor(end_value*app.freq_a);
             
             app.play_music_a = app.load_music_a(cut_start:cut_end);
         end
@@ -240,7 +240,7 @@ classdef SoundTransitionApp_exported < matlab.apps.AppBase
         % Value changed function: StartSlider_2
         function StartSlider_2ValueChanged(app, event)
             start_value = round(app.StartSlider_2.Value);
-            end_value = round(app.EndSlider_2.Value);
+            end_value = floor(app.EndSlider_2.Value);
             
             
             if start_value >= end_value
@@ -249,7 +249,7 @@ classdef SoundTransitionApp_exported < matlab.apps.AppBase
             end
             
             cut_start = round(start_value*app.freq_b);
-            cut_end = round(end_value*app.freq_b);
+            cut_end = floor(end_value*app.freq_b);
             
             app.play_music_b = app.load_music_b(cut_start:cut_end);
             
@@ -257,8 +257,8 @@ classdef SoundTransitionApp_exported < matlab.apps.AppBase
 
         % Value changed function: EndSlider_2
         function EndSlider_2ValueChanged(app, event)
-            start_value = app.StartSlider_2.Value;
-            end_value = app.EndSlider_2.Value;
+            start_value = round(app.StartSlider_2.Value);
+            end_value = floor(app.EndSlider_2.Value);
             
             
             if end_value <= start_value
@@ -267,7 +267,7 @@ classdef SoundTransitionApp_exported < matlab.apps.AppBase
             end
             
             cut_start = round(start_value*app.freq_b);
-            cut_end = round(end_value*app.freq_b);
+            cut_end = floor(end_value*app.freq_b);
             
             app.play_music_b = app.load_music_b(cut_start:cut_end);
             
